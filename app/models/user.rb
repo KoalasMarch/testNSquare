@@ -17,7 +17,7 @@ class User < ApplicationRecord
   require 'net/http'
   require 'uri'
 
-  validate :seperate_message, on: [:create, :update]
+  after_create :seperate_message
 
   ADDRESS_DB = JSON.parse( Net::HTTP.get(URI.parse("https://raw.githubusercontent.com/earthchie/jquery.Thailand.js/master/jquery.Thailand.js/database/raw_database/raw_database.json")))
 
@@ -26,27 +26,43 @@ class User < ApplicationRecord
   end
 
   def seperate_message
-    @message = self.message
+    find_zip_code
+    find_province
+    find_district
+    find_sub_district
+    self.save
+
+    generate_csv
+  end
+
+  def find_zip_code
     self.get_codes.each do |code|
-      if @message.include?(code.to_s)
-        @provinces = User::ADDRESS_DB.select{|x| x["zipcode"] == code}
+      if self.message.include?(code.to_s)
         self.zip_code = code
-        self.province = @provinces.first["province"]
-        @amphoe_name = @provinces.map{|x| x["amphoe"]}.uniq
-        @amphoe_name.each do |amp|
-          if @message.include?(amp)
-            self.district = amp
-            @amphoes = @provinces.select{|x| x["amphoe"] == amp}
-            @sub_district_name = @amphoes.map{|x| x["district"]}.uniq
-            @sub_district_name.each do |sub|
-              if @message.include?(sub)
-                self.sub_district = sub
-                self.save
-                self.generate_csv
-              end
-            end
-          end
-        end
+      end
+    end
+  end
+
+  def find_province
+    provinces = User::ADDRESS_DB.select{|x| x["zipcode"] == self.zip_code.to_i}
+    self.province = provinces.first["province"]
+  end
+
+  def find_district
+    districts = User::ADDRESS_DB.select{|x| x["province"] == self.province}
+    districts.map{|x| x["amphoe"]}.each do |district|
+      check = district.include?("เมือง") ? "เมือง" : district
+      if self.message.include?(check)
+        self.district = district
+      end
+    end
+  end
+
+  def find_sub_district
+    sub_districts = User::ADDRESS_DB.select{|x| x["amphoe"] == self.district}
+    sub_districts.map{|x| x["district"]}.each do |sub|
+      if self.message.include?(sub)
+        self.sub_district = sub
       end
     end
   end
