@@ -28,18 +28,18 @@ class User < ApplicationRecord
   def seperate_message
     @message = self.message
     self.get_codes.each do |code|
-      if message.include?(code.to_s)
+      if @message.include?(code.to_s)
         @provinces = User::ADDRESS_DB.select{|x| x["zipcode"] == code}
         self.zip_code = code
         self.province = @provinces.first["province"]
         @amphoe_name = @provinces.map{|x| x["amphoe"]}.uniq
         @amphoe_name.each do |amp|
-          if message.include?(amp)
+          if @message.include?(amp)
             self.district = amp
             @amphoes = @provinces.select{|x| x["amphoe"] == amp}
             @sub_district_name = @amphoes.map{|x| x["district"]}.uniq
             @sub_district_name.each do |sub|
-              if message.include?(sub)
+              if @message.include?(sub)
                 self.sub_district = sub
                 self.save
                 self.generate_csv
