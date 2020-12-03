@@ -1,0 +1,30 @@
+# == Schema Information
+#
+# Table name: users
+#
+#  id           :integer          not null, primary key
+#  address1     :text
+#  district     :text
+#  message      :text
+#  province     :text
+#  sub_district :text
+#  zip_code     :text
+#  created_at   :datetime         not null
+#  updated_at   :datetime         not null
+#
+
+one:
+  message: MyText
+  address1: MyText
+  sub_district: MyText
+  district: MyText
+  province: MyText
+  zip_code: MyText
+
+two:
+  message: MyText
+  address1: MyText
+  sub_district: MyText
+  district: MyText
+  province: MyText
+  zip_code: MyText
