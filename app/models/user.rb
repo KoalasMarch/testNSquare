@@ -13,11 +13,39 @@
 #  updated_at   :datetime         not null
 #
 class User < ApplicationRecord
-  require "CSV"
+  require 'CSV'
+  require 'net/http'
+  require 'uri'
+
+  ADDRESS_DB = JSON.parse( Net::HTTP.get(URI.parse("https://raw.githubusercontent.com/earthchie/jquery.Thailand.js/master/jquery.Thailand.js/database/raw_database/raw_database.json")))
+
+  def get_codes
+    User::ADDRESS_DB.map{|x| x["zipcode"]}.uniq
+  end
 
   def seperate_message
-    self.message.split(" ")
-
+    @message = self.message
+    self.get_codes.each do |code|
+      if message.include?(code.to_s)
+        @provinces = User::ADDRESS_DB.select{|x| x["zipcode"] == code}
+        self.zip_code = code
+        self.province = @provinces.first["province"]
+        @amphoe_name = @provinces.map{|x| x["amphoe"]}.uniq
+        @amphoe_name.each do |amp|
+          if message.include?(amp)
+            self.district = amp
+            @amphoes = @provinces.select{|x| x["amphoe"] == amp}
+            @sub_district_name = @amphoes.map{|x| x["district"]}.uniq
+            @sub_district_name.each do |sub|
+              if message.include?(sub)
+                self.sub_district = sub
+                self.save
+              end
+            end
+          end
+        end
+      end
+    end
   end
 
   def generate_csv
