@@ -17,6 +17,8 @@ class User < ApplicationRecord
   require 'net/http'
   require 'uri'
 
+  validate :seperate_message, on: [:create, :update]
+
   ADDRESS_DB = JSON.parse( Net::HTTP.get(URI.parse("https://raw.githubusercontent.com/earthchie/jquery.Thailand.js/master/jquery.Thailand.js/database/raw_database/raw_database.json")))
 
   def get_codes
@@ -40,6 +42,7 @@ class User < ApplicationRecord
               if message.include?(sub)
                 self.sub_district = sub
                 self.save
+                self.generate_csv
               end
             end
           end
